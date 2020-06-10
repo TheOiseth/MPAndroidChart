@@ -2,7 +2,6 @@ package com.github.mikephil.charting.listener;
 
 import android.annotation.SuppressLint;
 import android.graphics.Matrix;
-import android.graphics.PointF;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
@@ -42,16 +41,18 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
     /**
      * point where the touch action started
      */
-    private MPPointF mTouchStartPoint = MPPointF.getInstance(0,0);
+    private MPPointF mTouchStartPoint = MPPointF.getInstance(0, 0);
 
     /**
      * center between two pointers (fingers on the display)
      */
-    private MPPointF mTouchPointCenter = MPPointF.getInstance(0,0);
+    private MPPointF mTouchPointCenter = MPPointF.getInstance(0, 0);
 
     private float mSavedXDist = 1f;
     private float mSavedYDist = 1f;
     private float mSavedDist = 1f;
+    private float mSavedScaleX = 1f;
+    private float mSavedScaleY = 1f;
 
     private IDataSet mClosestDataSetToTouch;
 
@@ -61,8 +62,8 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
     private VelocityTracker mVelocityTracker;
 
     private long mDecelerationLastTime = 0;
-    private MPPointF mDecelerationCurrentPoint = MPPointF.getInstance(0,0);
-    private MPPointF mDecelerationVelocity = MPPointF.getInstance(0,0);
+    private MPPointF mDecelerationCurrentPoint = MPPointF.getInstance(0, 0);
+    private MPPointF mDecelerationVelocity = MPPointF.getInstance(0, 0);
 
     /**
      * the distance of movement that will be counted as a drag
@@ -138,6 +139,8 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
 
                     // get the distance between the pointers on the x-axis
                     mSavedXDist = getXDist(event);
+                    mSavedScaleX = mChart.getScaleX();
+                    mSavedScaleY = mChart.getScaleY();
 
                     // get the distance between the pointers on the y-axis
                     mSavedYDist = getYDist(event);
@@ -331,6 +334,7 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
             }
         }
 
+        float[] floats = new float[9];
         mMatrix.postTranslate(distanceX, distanceY);
 
         if (l != null)
@@ -377,6 +381,22 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
                     float scaleX = (mChart.isScaleXEnabled()) ? scale : 1f;
                     float scaleY = (mChart.isScaleYEnabled()) ? scale : 1f;
 
+                    float newScaleX = scaleX * mSavedScaleX;
+                    if (newScaleX > h.getMaxScaleX()) {
+                        scaleX = h.getMaxScaleX() / mSavedScaleX;
+                    }
+                    if (newScaleX < h.getMinScaleX()) {
+                        scaleX = h.getMinScaleX() / mSavedScaleX;
+                    }
+
+                    float newScaleY = scaleY * mSavedScaleY;
+                    if (newScaleY > h.getMaxScaleY()) {
+                        scaleY = h.getMaxScaleY() / mSavedScaleY;
+                    }
+                    if (newScaleY < h.getMinScaleY()) {
+                        scaleY = h.getMinScaleY() / mSavedScaleY;
+                    }
+
                     if (canZoomMoreY || canZoomMoreX) {
 
                         mMatrix.set(mSavedMatrix);
@@ -392,7 +412,13 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
 
                     float xDist = getXDist(event);
                     float scaleX = xDist / mSavedXDist; // x-axis scale
-
+                    float newScaleX = scaleX * mSavedScaleX;
+                    if (newScaleX > h.getMaxScaleX()) {
+                        scaleX = h.getMaxScaleX() / mSavedScaleX;
+                    }
+                    if (newScaleX < h.getMinScaleX()) {
+                        scaleX = h.getMinScaleX() / mSavedScaleX;
+                    }
                     boolean isZoomingOut = (scaleX < 1);
                     boolean canZoomMoreX = isZoomingOut ?
                             h.canZoomOutMoreX() :
@@ -413,7 +439,13 @@ public class BarLineChartTouchListener extends ChartTouchListener<BarLineChartBa
 
                     float yDist = getYDist(event);
                     float scaleY = yDist / mSavedYDist; // y-axis scale
-
+                    float newScaleY = scaleY * mSavedScaleY;
+                    if (newScaleY > h.getMaxScaleY()) {
+                        scaleY = h.getMaxScaleY() / mSavedScaleY;
+                    }
+                    if (newScaleY < h.getMinScaleY()) {
+                        scaleY = h.getMinScaleY() / mSavedScaleY;
+                    }
                     boolean isZoomingOut = (scaleY < 1);
                     boolean canZoomMoreY = isZoomingOut ?
                             h.canZoomOutMoreY() :
